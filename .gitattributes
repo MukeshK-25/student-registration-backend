@@ -1,0 +1,8 @@
+# Automatically normalize line endings
+* text=auto
+
+# Explicitly normalize common text files
+*.js text
+*.ts text
+*.json text
+*.md text
