@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registration</title>
+</head>
+<body>
+
+<h1>Student Registration System</h1>
+
+<form id="studentForm">
+    <input type="text" id="name" placeholder="Enter Name" required>
+    <input type="text" id="course" placeholder="Enter Course" required>
+    <button type="submit">Add Student</button>
+</form>
+
+<h2>Student List</h2>
+<ul id="studentList"></ul>
+
+<script>
+const form = document.getElementById("studentForm");
+const studentList = document.getElementById("studentList");
+let editId = null;
+
+window.onload = loadStudents;
+
+function loadStudents() {
+    fetch("http://localhost:5000/students")
+        .then(res => res.json())
+        .then(data => {
+            studentList.innerHTML = "";
+            data.forEach(student => {
+                addStudentToList(student);
+            });
+        });
+}
+
+form.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const course = document.getElementById("course").value;
+
+    if (editId === null) {
+        // ADD
+        fetch("http://localhost:5000/students", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, course })
+        })
+        .then(res => res.json())
+        .then(() => {
+            loadStudents();
+            form.reset();
+        });
+    } else {
+        // UPDATE
+        fetch(`http://localhost:5000/students/${editId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, course })
+        })
+        .then(() => {
+            editId = null;
+            form.querySelector("button").textContent = "Add Student";
+            loadStudents();
+            form.reset();
+        });
+    }
+});
+
+function addStudentToList(student) {
+    const li = document.createElement("li");
+    li.innerHTML = `
+        ${student.name} - ${student.course}
+        <button onclick="editStudent(${student.id}, '${student.name}', '${student.course}')">Edit</button>
+        <button onclick="deleteStudent(${student.id})">Delete</button>
+    `;
+    studentList.appendChild(li);
+}
+
+function deleteStudent(id) {
+    fetch(`http://localhost:5000/students/${id}`, {
+        method: "DELETE"
+    })
+    .then(() => loadStudents());
+}
+
+function editStudent(id, name, course) {
+    document.getElementById("name").value = name;
+    document.getElementById("course").value = course;
+
+    editId = id;
+    form.querySelector("button").textContent = "Update Student";
+}
+</script>
+
+</body>
+</html>
